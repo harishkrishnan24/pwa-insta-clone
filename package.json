@@ -1,0 +1,21 @@
+{
+	"name": "pwa-insta-clone",
+	"version": "1.0.0",
+	"description": "Building a simple Instagram clone.",
+	"main": "index.js",
+	"scripts": {
+		"start": "http-server -c-1"
+	},
+	"keywords": [
+		"pwa",
+		"progressive",
+		"web",
+		"app",
+		"insta"
+	],
+	"author": "Harish Krishnan",
+	"license": "ISC",
+	"devDependencies": {
+		"http-server": "^0.9.0"
+	}
+}
