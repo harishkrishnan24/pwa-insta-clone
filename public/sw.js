@@ -1,4 +1,6 @@
-const CACHE_STATIC_NAME = "static-v6";
+importScripts("/src/js/idb.js");
+
+const CACHE_STATIC_NAME = "static-v7";
 const CACHE_DYNAMIC_NAME = "dynamic-v2";
 
 const STATIC_FILES = [
@@ -7,6 +9,7 @@ const STATIC_FILES = [
 	"/offline.html",
 	"/src/js/app.js",
 	"/src/js/feed.js",
+	"/src/js/idb.js",
 	"/src/js/promise.js",
 	"/src/js/fetch.js",
 	"/src/js/material.min.js",
@@ -18,15 +21,21 @@ const STATIC_FILES = [
 	"https://cdnjs.cloudflare.com/ajax/libs/material-design-lite/1.3.0/material.indigo-pink.min.css",
 ];
 
-function trimCache(cacheName, maxItems) {
-	caches.open(cacheName).then((cache) => {
-		return cache.keys().then((keys) => {
-			if (keys.length > maxItems) {
-				cache.delete(keys[0]).then(trimCache(cacheName, maxItems));
-			}
-		});
-	});
-}
+const dbPromise = idb.open("posts-store", 1, (db) => {
+	if (!db.objectStoreNames.contains("posts")) {
+		db.createObjectStore("posts", { keyPath: "id" });
+	}
+});
+
+// function trimCache(cacheName, maxItems) {
+// 	caches.open(cacheName).then((cache) => {
+// 		return cache.keys().then((keys) => {
+// 			if (keys.length > maxItems) {
+// 				cache.delete(keys[0]).then(trimCache(cacheName, maxItems));
+// 			}
+// 		});
+// 	});
+// }
 
 self.addEventListener("install", (event) => {
 	console.log("[Service Worker] Installing service worker...", event);
@@ -68,16 +77,23 @@ function isInArray(string, array) {
 }
 
 self.addEventListener("fetch", (event) => {
-	const url = "https://httpbin.org/get";
+	const url = "https://pwagram-51f1d.firebaseio.com/posts.json";
 
 	if (event.request.url.indexOf(url) > -1) {
 		event.respondWith(
-			caches.open(CACHE_DYNAMIC_NAME).then((cache) => {
-				return fetch(event.request).then((res) => {
-					trimCache(CACHE_DYNAMIC_NAME, 3);
-					cache.put(event.request, res.clone());
-					return res;
+			fetch(event.request).then((res) => {
+				let clonedRes = res.clone();
+				clonedRes.json().then((data) => {
+					for (let key in data) {
+						dbPromise.then((db) => {
+							let tx = db.transaction("posts", "readwrite");
+							let store = tx.objectStore("posts");
+							store.put(data[key]);
+							return tx.complete;
+						});
+					}
 				});
+				return res;
 			})
 		);
 	} else if (isInArray(event.request.url, STATIC_FILES)) {
@@ -91,7 +107,7 @@ self.addEventListener("fetch", (event) => {
 					return fetch(event.request)
 						.then((res) => {
 							return caches.open(CACHE_DYNAMIC_NAME).then((cache) => {
-								trimCache(CACHE_DYNAMIC_NAME, 3);
+								// trimCache(CACHE_DYNAMIC_NAME, 3);
 								cache.put(event.request.url, res.clone());
 								return res;
 							});
