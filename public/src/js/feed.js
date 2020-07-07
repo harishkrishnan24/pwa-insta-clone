@@ -103,22 +103,10 @@ fetch(url)
 		updateUI(dataArray);
 	});
 
-if ("caches" in window) {
-	caches
-		.match(url)
-		.then((res) => {
-			if (res) {
-				return res.json();
-			}
-		})
-		.then((data) => {
-			console.log("From cache", data);
-			if (!networkDataReceived) {
-				let dataArray = [];
-				for (let key in data) {
-					dataArray.push(data[key]);
-				}
-				updateUI(dataArray);
-			}
-		});
+if ("indexedDB" in window) {
+	readAllData("posts").then((data) => {
+		if (!networkDataReceived) {
+			updateUI(data);
+		}
+	});
 }
