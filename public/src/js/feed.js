@@ -4,9 +4,15 @@ var closeCreatePostModalButton = document.querySelector(
 	"#close-create-post-modal-btn"
 );
 var sharedMomentsArea = document.querySelector("#shared-moments");
+var form = document.querySelector("form");
+var titleInput = document.querySelector("#title");
+var locationInput = document.querySelector("#location");
 
 function openCreatePostModal() {
 	createPostArea.style.display = "block";
+	setTimeout(() => {
+		createPostArea.style.transform = "translateY(0)";
+	}, 1);
 	if (deferredPrompt) {
 		deferredPrompt.prompt();
 		deferredPrompt.userChoice.then((choiceResult) => {
@@ -31,6 +37,7 @@ function openCreatePostModal() {
 }
 
 function closeCreatePostModal() {
+	createPostArea.style.transform = "translateY(100vh)";
 	createPostArea.style.display = "none";
 }
 
@@ -60,7 +67,6 @@ function createCard(data) {
 	cardTitle.className = "mdl-card__title";
 	cardTitle.style.backgroundImage = `url(${data.image})`;
 	cardTitle.style.backgroundSize = "cover";
-	cardTitle.style.height = "180px";
 	cardWrapper.appendChild(cardTitle);
 	var cardTitleTextElement = document.createElement("h2");
 	cardTitleTextElement.className = "mdl-card__title-text";
@@ -110,3 +116,60 @@ if ("indexedDB" in window) {
 		}
 	});
 }
+
+function sendData() {
+	fetch(url, {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json",
+			Accept: "application/json",
+		},
+		body: JSON.stringify({
+			id: new Date().toISOString(),
+			title: titleInput.value,
+			location: locationInput.value,
+			image:
+				"https://firebasestorage.googleapis.com/v0/b/pwagram-51f1d.appspot.com/o/sf-boat.jpg?alt=media&token=5e53a030-aa4f-4855-b514-38aad51ff1e3",
+		}),
+	}).then((res) => {
+		console.log("sent data", res);
+		updateUI();
+	});
+}
+
+form.addEventListener("submit", function (event) {
+	event.preventDefault();
+
+	if (titleInput.value.trim() === "" || locationInput.value.trim() === "") {
+		alert("Please enter valid data!");
+		return;
+	}
+
+	closeCreatePostModal();
+
+	if ("serviceWorker" in navigator && "SyncManager" in window) {
+		navigator.serviceWorker.ready.then((sw) => {
+			const post = {
+				title: titleInput.value,
+				location: locationInput.value,
+				id: new Date().toISOString(),
+			};
+			writeData("sync-posts", post)
+				.then(() => {
+					return sw.sync.register("sync-new-post");
+				})
+				.then(() => {
+					const snackbarContainer = document.querySelector(
+						"#confirmation-toast"
+					);
+					const data = { message: "Your Post was saved for syncing" };
+					snackbarContainer.MaterialSnackbar.showSnackbar(data);
+				})
+				.catch((err) => {
+					console.log(err);
+				});
+		});
+	} else {
+		sendData();
+	}
+});
