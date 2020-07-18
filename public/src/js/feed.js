@@ -118,7 +118,7 @@ if ("indexedDB" in window) {
 }
 
 function sendData() {
-	fetch(url, {
+	fetch("https://us-central1-pwagram-51f1d.cloudfunctions.net/storePostData", {
 		method: "POST",
 		headers: {
 			"Content-Type": "application/json",
@@ -156,7 +156,7 @@ form.addEventListener("submit", function (event) {
 			};
 			writeData("sync-posts", post)
 				.then(() => {
-					return sw.sync.register("sync-new-post");
+					return sw.sync.register("sync-new-posts");
 				})
 				.then(() => {
 					const snackbarContainer = document.querySelector(

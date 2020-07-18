@@ -19,7 +19,7 @@ function writeData(st, data) {
 function readAllData(st) {
 	return dbPromise.then((db) => {
 		const tx = db.transaction(st, "readonly");
-		const store = tx.objectStore(St);
+		const store = tx.objectStore(st);
 		return store.getAll();
 	});
 }
