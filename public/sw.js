@@ -207,3 +207,14 @@ self.addEventListener("sync", (event) => {
 		);
 	}
 });
+
+self.addEventListener("notificationclick", (event) => {
+	let notification = event.notification;
+	let action = event.action;
+
+	if (action === "confirm") {
+		notification.close();
+	} else {
+		notification.close();
+	}
+});
