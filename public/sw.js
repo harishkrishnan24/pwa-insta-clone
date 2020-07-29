@@ -215,6 +215,43 @@ self.addEventListener("notificationclick", (event) => {
 	if (action === "confirm") {
 		notification.close();
 	} else {
-		notification.close();
+		event.waitUntil(
+			clients.matchAll().then((clients) => {
+				const client = clients.find((c) => c.visibilityState === "visible");
+
+				if (client !== undefined) {
+					client.navigate(notification.data.url);
+					client.focus();
+				} else {
+					clients.openWindow(notification.data.url);
+				}
+				notification.close();
+			})
+		);
 	}
+});
+
+self.addEventListener("notificationclose", (event) => {});
+
+self.addEventListener("push", (event) => {
+	console.log("Push Notification received");
+	let data = {
+		title: "New!",
+		content: "Something new happened!",
+		openUrl: "/",
+	};
+	if (event.data) {
+		data = JSON.parse(event.data.text());
+	}
+
+	const options = {
+		body: data.content,
+		icon: "/src/images/icons/app-icon-96x96.png",
+		badge: "/src/images/icons/app-icon-96x96.png",
+		data: {
+			url: data.openUrl,
+		},
+	};
+
+	event.waitUntil(self.registration.showNotification(data.title, options));
 });

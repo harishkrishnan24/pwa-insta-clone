@@ -57,6 +57,50 @@ function displayConfirmNotification() {
 	}
 }
 
+function configurePushSub() {
+	if (!("serviceWorker" in navigator)) {
+		return;
+	}
+
+	let req;
+
+	navigator.serviceWorker.ready
+		.then((swreg) => {
+			req = swreg;
+			return swreg.pushManager.getSubscription();
+		})
+		.then((sub) => {
+			if (sub === null) {
+				const vapidPublicKey =
+					"BJiz6XNrNQfymzNITTyrR1GHp1bjPpf8YPuwf6vJ6Drz2qqFD1M24wSHkUGXV-iW6KqX_qfXgTqJNDUWOAbjKiw";
+				const convertedVapidPublicKey = urlBase64ToUint8Array(vapidPublicKey);
+				return req.pushManager.subscribe({
+					userVisibleOnly: true,
+					applicationServerKey: convertedVapidPublicKey,
+				});
+			} else {
+			}
+		})
+		.then((newSub) => {
+			return fetch("https://pwagram-51f1d.firebaseio.com/subscriptions.json", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					Accept: "application/json",
+				},
+				body: JSON.stringify(newSub),
+			});
+		})
+		.then((res) => {
+			if (res.ok) {
+				displayConfirmNotification();
+			}
+		})
+		.catch((err) => {
+			console.lof(err);
+		});
+}
+
 function askForNotificationPermission() {
 	Notification.requestPermission(function (result) {
 		console.log("User Choice", result);
@@ -64,12 +108,12 @@ function askForNotificationPermission() {
 		if (result !== "granted") {
 			console.log("No notification permission granted");
 		} else {
-			displayConfirmNotification();
+			configurePushSub();
 		}
 	});
 }
 
-if ("Notification" in window) {
+if ("Notification" in window && "serviceWorker" in navigator) {
 	for (let i = 0; i < enableNotificationsButtons.length; i++) {
 		enableNotificationsButtons[i].style.display = "inline-block";
 		enableNotificationsButtons[i].addEventListener(
