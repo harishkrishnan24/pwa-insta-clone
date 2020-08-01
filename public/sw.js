@@ -9,6 +9,7 @@ const STATIC_FILES = [
 	"/index.html",
 	"/offline.html",
 	"/src/js/app.js",
+	"/src/js/utility.js",
 	"/src/js/feed.js",
 	"/src/js/idb.js",
 	"/src/js/promise.js",
@@ -174,21 +175,19 @@ self.addEventListener("sync", (event) => {
 		event.waitUntil(
 			readAllData("sync-posts").then((data) => {
 				for (let dt of data) {
+					var postData = new FormData();
+					postData.append("id", dt.id);
+					postData.append("title", dt.title);
+					postData.append("location", dt.location);
+					postData.append("file", dt.picture, dt.id + ".png");
+					postData.append("rawLocationLat", dt.rawLocation.lat);
+					postData.append("rawLocationLng", dt..rawLocation.lng);
+
 					fetch(
 						"https://us-central1-pwagram-51f1d.cloudfunctions.net/storePostData",
 						{
 							method: "POST",
-							headers: {
-								"Content-Type": "application/json",
-								Accept: "application/json",
-							},
-							body: JSON.stringify({
-								id: dt.id,
-								title: dt.title,
-								location: dt.location,
-								image:
-									"https://firebasestorage.googleapis.com/v0/b/pwagram-51f1d.appspot.com/o/sf-boat.jpg?alt=media&token=5e53a030-aa4f-4855-b514-38aad51ff1e3",
-							}),
+							body: postData,
 						}
 					)
 						.then((res) => {
