@@ -7,5 +7,5 @@ module.exports = {
 	],
 	swDest: "public/service-worker.js",
 	swSrc: "public/sw-base.js",
-	globIgnores: ["../workbox-cli-config.js", "help/**"],
+	globIgnores: ["../workbox-cli-config.js", "help/**", "404.html"],
 };
